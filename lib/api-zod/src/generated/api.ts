@@ -21,7 +21,7 @@ export const GetDailyTasksQueryParams = zod.object({
   date: zod.date().optional(),
 });
 
-export const getDailyTasksResponsePositionMax = 3;
+export const getDailyTasksResponsePositionMax = 6;
 
 export const GetDailyTasksResponseItem = zod.object({
   id: zod.number(),
@@ -37,7 +37,7 @@ export const GetDailyTasksResponse = zod.array(GetDailyTasksResponseItem);
 /**
  * @summary Create or update a daily task
  */
-export const upsertDailyTaskBodyPositionMax = 3;
+export const upsertDailyTaskBodyPositionMax = 6;
 
 export const UpsertDailyTaskBody = zod.object({
   taskText: zod.string(),
@@ -46,7 +46,7 @@ export const UpsertDailyTaskBody = zod.object({
   id: zod.number().nullish(),
 });
 
-export const upsertDailyTaskResponsePositionMax = 3;
+export const upsertDailyTaskResponsePositionMax = 6;
 
 export const UpsertDailyTaskResponse = zod.object({
   id: zod.number(),
@@ -69,7 +69,7 @@ export const CompleteDailyTaskBody = zod.object({
   completed: zod.boolean(),
 });
 
-export const completeDailyTaskResponsePositionMax = 3;
+export const completeDailyTaskResponsePositionMax = 6;
 
 export const CompleteDailyTaskResponse = zod.object({
   id: zod.number(),

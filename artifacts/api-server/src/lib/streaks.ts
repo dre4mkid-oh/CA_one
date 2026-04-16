@@ -40,17 +40,14 @@ export async function recalculateStreaks(): Promise<void> {
   const completedCount = todaysTasks.filter(t => t.completed).length;
 
   if (streak.restoreMode) {
-    const newProgress = completedCount;
+    const completedToday = completedCount;
     const requiredForRestore = 6;
 
-    if (newProgress >= requiredForRestore) {
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().split("T")[0];
-
-      const newCurrent = streak.lastCompletedDate
-        ? (daysBetween(streak.lastCompletedDate, today) === 1 ? streak.currentStreak + 1 : 1)
-        : 1;
+    if (completedToday >= requiredForRestore) {
+      // Restore success: continue streak from pre-miss value + 1 for today.
+      // currentStreak was preserved (not reset) when entering restore mode,
+      // so it still holds the pre-miss streak count.
+      const newCurrent = streak.currentStreak + 1;
 
       await db.update(streaksTable).set({
         currentStreak: newCurrent,
@@ -62,7 +59,7 @@ export async function recalculateStreaks(): Promise<void> {
       }).where(eq(streaksTable.id, streak.id));
     } else {
       await db.update(streaksTable).set({
-        restoreProgress: newProgress,
+        restoreProgress: completedToday,
         updatedAt: new Date(),
       }).where(eq(streaksTable.id, streak.id));
     }

@@ -13,7 +13,7 @@ export interface DailyTask {
   completed: boolean;
   /**
    * @minimum 1
-   * @maximum 3
+   * @maximum 6
    */
   position: number;
   completedAt?: Date | null;

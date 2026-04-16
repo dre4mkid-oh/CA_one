@@ -227,9 +227,14 @@ function CustomCountdownCard({ countdown, index, onDelete, onUpdate }: CustomCou
             <Trash2 className="w-4 h-4" />
           </Button>
         </CardTitle>
-        <p className="text-xs text-muted-foreground font-medium">
-          {format(new Date(countdown.targetDate), "PPP 'at' p")}
-        </p>
+        <input
+          type="datetime-local"
+          value={format(new Date(countdown.targetDate), "yyyy-MM-dd'T'HH:mm")}
+          onChange={(e) =>
+            e.target.value && onUpdate({ targetDate: new Date(e.target.value).toISOString() })
+          }
+          className="text-xs text-muted-foreground font-medium bg-transparent border-0 outline-none w-full cursor-pointer hover:text-foreground transition-colors"
+        />
       </CardHeader>
       <CardContent className="mt-auto pt-4">
         {isPast ? (

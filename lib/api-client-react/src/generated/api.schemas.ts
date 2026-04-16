@@ -16,7 +16,7 @@ export interface DailyTask {
   completed: boolean;
   /**
    * @minimum 1
-   * @maximum 3
+   * @maximum 6
    */
   position: number;
   completedAt?: string | null;
@@ -28,7 +28,7 @@ export interface UpsertDailyTaskBody {
   date: string;
   /**
    * @minimum 1
-   * @maximum 3
+   * @maximum 6
    */
   position: number;
   id?: number | null;

@@ -11,7 +11,7 @@ export interface UpsertDailyTaskBody {
   date: Date;
   /**
    * @minimum 1
-   * @maximum 3
+   * @maximum 6
    */
   position: number;
   id?: number | null;
