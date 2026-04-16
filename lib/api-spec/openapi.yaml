@@ -3,20 +3,30 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: WorkFlow — Work Time Tracker API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: daily-tasks
+    description: Daily non-negotiable tasks
+  - name: task-log
+    description: Work session task log entries
+  - name: streaks
+    description: Streak tracking
+  - name: countdowns
+    description: Custom countdown events
+  - name: stats
+    description: Statistics and summaries
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +34,281 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /daily-tasks:
+    get:
+      operationId: getDailyTasks
+      tags: [daily-tasks]
+      summary: Get today's 3 non-negotiable tasks
+      parameters:
+        - name: date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: List of daily tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DailyTask"
+    post:
+      operationId: upsertDailyTask
+      tags: [daily-tasks]
+      summary: Create or update a daily task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpsertDailyTaskBody"
+      responses:
+        "200":
+          description: Task saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DailyTask"
+
+  /daily-tasks/{id}/complete:
+    post:
+      operationId: completeDailyTask
+      tags: [daily-tasks]
+      summary: Mark a daily task as complete or incomplete
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteTaskBody"
+      responses:
+        "200":
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DailyTask"
+
+  /task-log:
+    get:
+      operationId: getTaskLog
+      tags: [task-log]
+      summary: Get task log entries for a date
+      parameters:
+        - name: date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Task log entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TaskLogEntry"
+    post:
+      operationId: createTaskLogEntry
+      tags: [task-log]
+      summary: Create a new task log entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTaskLogEntryBody"
+      responses:
+        "201":
+          description: Task log entry created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskLogEntry"
+
+  /task-log/{id}:
+    put:
+      operationId: updateTaskLogEntry
+      tags: [task-log]
+      summary: Update a task log entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTaskLogEntryBody"
+      responses:
+        "200":
+          description: Task log entry updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskLogEntry"
+    delete:
+      operationId: deleteTaskLogEntry
+      tags: [task-log]
+      summary: Delete a task log entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /streaks:
+    get:
+      operationId: getStreaks
+      tags: [streaks]
+      summary: Get current streak info
+      responses:
+        "200":
+          description: Streak info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreakInfo"
+    post:
+      operationId: updateStreaks
+      tags: [streaks]
+      summary: Recalculate and update streaks after completing tasks
+      responses:
+        "200":
+          description: Updated streak info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreakInfo"
+
+  /countdowns:
+    get:
+      operationId: getCountdowns
+      tags: [countdowns]
+      summary: Get custom countdown events
+      responses:
+        "200":
+          description: List of countdowns
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Countdown"
+    post:
+      operationId: createCountdown
+      tags: [countdowns]
+      summary: Create a countdown
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCountdownBody"
+      responses:
+        "201":
+          description: Countdown created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Countdown"
+
+  /countdowns/{id}:
+    put:
+      operationId: updateCountdown
+      tags: [countdowns]
+      summary: Update a countdown
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCountdownBody"
+      responses:
+        "200":
+          description: Countdown updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Countdown"
+    delete:
+      operationId: deleteCountdown
+      tags: [countdowns]
+      summary: Delete a countdown
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /stats/summary:
+    get:
+      operationId: getStatsSummary
+      tags: [stats]
+      summary: Get stats summary (streak, completion rates)
+      responses:
+        "200":
+          description: Stats summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatsSummary"
+
+  /stats/history:
+    get:
+      operationId: getStatsHistory
+      tags: [stats]
+      summary: Get daily completion history for calendar heatmap
+      parameters:
+        - name: year
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: month
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Completion history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DayCompletion"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +316,221 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    DailyTask:
+      type: object
+      properties:
+        id:
+          type: integer
+        taskText:
+          type: string
+        date:
+          type: string
+          format: date
+        completed:
+          type: boolean
+        position:
+          type: integer
+          minimum: 1
+          maximum: 3
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, taskText, date, completed, position, createdAt]
+
+    UpsertDailyTaskBody:
+      type: object
+      properties:
+        taskText:
+          type: string
+        date:
+          type: string
+          format: date
+        position:
+          type: integer
+          minimum: 1
+          maximum: 3
+        id:
+          type: integer
+          nullable: true
+      required: [taskText, date, position]
+
+    CompleteTaskBody:
+      type: object
+      properties:
+        completed:
+          type: boolean
+      required: [completed]
+
+    TaskLogEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        taskName:
+          type: string
+        date:
+          type: string
+          format: date
+        timeStarted:
+          type: string
+          nullable: true
+        timeEnded:
+          type: string
+          nullable: true
+        block1:
+          type: boolean
+        block2:
+          type: boolean
+        block3:
+          type: boolean
+        block4:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, taskName, date, block1, block2, block3, block4, createdAt]
+
+    CreateTaskLogEntryBody:
+      type: object
+      properties:
+        taskName:
+          type: string
+        date:
+          type: string
+          format: date
+        timeStarted:
+          type: string
+          nullable: true
+        timeEnded:
+          type: string
+          nullable: true
+        block1:
+          type: boolean
+        block2:
+          type: boolean
+        block3:
+          type: boolean
+        block4:
+          type: boolean
+      required: [taskName, date, block1, block2, block3, block4]
+
+    UpdateTaskLogEntryBody:
+      type: object
+      properties:
+        taskName:
+          type: string
+        timeStarted:
+          type: string
+          nullable: true
+        timeEnded:
+          type: string
+          nullable: true
+        block1:
+          type: boolean
+        block2:
+          type: boolean
+        block3:
+          type: boolean
+        block4:
+          type: boolean
+
+    StreakInfo:
+      type: object
+      properties:
+        currentStreak:
+          type: integer
+        longestStreak:
+          type: integer
+        lastCompletedDate:
+          type: string
+          format: date
+          nullable: true
+        restoreMode:
+          type: boolean
+        restoreProgress:
+          type: integer
+          description: Number of tasks completed today in restore mode (need 6)
+      required: [currentStreak, longestStreak, restoreMode, restoreProgress]
+
+    Countdown:
+      type: object
+      properties:
+        id:
+          type: integer
+        label:
+          type: string
+        targetDate:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, label, targetDate, createdAt]
+
+    CreateCountdownBody:
+      type: object
+      properties:
+        label:
+          type: string
+        targetDate:
+          type: string
+          format: date-time
+      required: [label, targetDate]
+
+    UpdateCountdownBody:
+      type: object
+      properties:
+        label:
+          type: string
+        targetDate:
+          type: string
+          format: date-time
+
+    StatsSummary:
+      type: object
+      properties:
+        currentStreak:
+          type: integer
+        longestStreak:
+          type: integer
+        totalDaysCompleted:
+          type: integer
+        weeklyCompletionRate:
+          type: number
+          description: Fraction 0.0-1.0
+        monthlyCompletionRate:
+          type: number
+          description: Fraction 0.0-1.0
+        totalTaskLogEntries:
+          type: integer
+        restoreMode:
+          type: boolean
+        restoreProgress:
+          type: integer
+      required:
+        - currentStreak
+        - longestStreak
+        - totalDaysCompleted
+        - weeklyCompletionRate
+        - monthlyCompletionRate
+        - totalTaskLogEntries
+        - restoreMode
+        - restoreProgress
+
+    DayCompletion:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        completed:
+          type: boolean
+        tasksCompleted:
+          type: integer
+      required: [date, completed, tasksCompleted]
