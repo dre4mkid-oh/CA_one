@@ -1,7 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { format, subDays, startOfDay, isSameDay } from "date-fns";
-import { useQuery } from "@tanstack/react-query";
-import { Flame, Trophy, Calendar as CalendarIcon, CheckCircle2, XCircle } from "lucide-react";
+import { Flame, Trophy, Calendar as CalendarIcon, CheckCircle2 } from "lucide-react";
 import {
   useGetStatsSummary,
   getGetStatsSummaryQueryKey,
@@ -12,17 +11,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 
 export default function Stats() {
-  const { data: summary, isLoading: summaryLoading } = useGetStatsSummary({
+  const { data: summary } = useGetStatsSummary({
     query: { queryKey: getGetStatsSummaryQueryKey() },
   });
 
   const today = new Date();
-  const currentMonth = today.getMonth() + 1;
   const currentYear = today.getFullYear();
 
-  const { data: history, isLoading: historyLoading } = useGetStatsHistory(
-    { month: currentMonth, year: currentYear },
-    { query: { queryKey: getGetStatsHistoryQueryKey({ month: currentMonth, year: currentYear }) } }
+  // Fetch the full year so the 90-day heatmap is never empty for recent months
+  const { data: history } = useGetStatsHistory(
+    { year: currentYear },
+    { query: { queryKey: getGetStatsHistoryQueryKey({ year: currentYear }) } }
   );
 
   const past90Days = useMemo(() => {
@@ -158,7 +157,17 @@ export default function Stats() {
   );
 }
 
-function StatCard({ title, value, unit, icon, colorClass, bgClass, subtitle }: any) {
+interface StatCardProps {
+  title: string;
+  value: number;
+  unit: string;
+  icon: ReactNode;
+  colorClass: string;
+  bgClass: string;
+  subtitle?: string;
+}
+
+function StatCard({ title, value, unit, icon, colorClass, bgClass, subtitle }: StatCardProps) {
   return (
     <Card className="overflow-hidden border-border shadow-sm hover:shadow-md transition-all">
       <CardContent className="p-6">

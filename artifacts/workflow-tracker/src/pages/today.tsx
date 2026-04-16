@@ -15,15 +15,26 @@ import {
   useCreateTaskLogEntry,
   useUpdateTaskLogEntry,
   useDeleteTaskLogEntry,
-  DailyTask,
   TaskLogEntry,
 } from "@workspace/api-client-react";
+
 import { useClock } from "@/hooks/use-timer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+
+type TaskLogUpdate = {
+  taskName?: string;
+  timeStarted?: string | null;
+  timeEnded?: string | null;
+  block1?: boolean;
+  block2?: boolean;
+  block3?: boolean;
+  block4?: boolean;
+};
 
 export default function Today() {
   const queryClient = useQueryClient();
@@ -49,16 +60,22 @@ export default function Today() {
   const updateLog = useUpdateTaskLogEntry();
   const deleteLog = useDeleteTaskLogEntry();
 
-  const allCompleted = tasks?.length === 3 && tasks.every((t) => t.completed);
+  const isRestoreMode = !!streak?.restoreMode;
+  const requiredTaskCount = isRestoreMode ? 6 : 3;
+  const allCompleted =
+    !!tasks &&
+    tasks.filter((t) => t.position <= requiredTaskCount).length === requiredTaskCount &&
+    tasks.filter((t) => t.position <= requiredTaskCount).every((t) => t.completed);
 
-  // Auto-fill empty tasks if missing — run only once per date when data first loads
+  // Auto-fill task slots once per date+mode combination when data first loads
   const initializedRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!tasksLoading && tasks && initializedRef.current !== today) {
-      const positions = [1, 2, 3];
-      const missing = positions.filter((p) => !tasks.find((t) => t.position === p));
-      if (missing.length > 0) {
-        initializedRef.current = today;
+    if (!tasksLoading && !streakLoading && tasks) {
+      const key = `${today}-${isRestoreMode ? "restore" : "normal"}`;
+      if (initializedRef.current !== key) {
+        const positions = Array.from({ length: requiredTaskCount }, (_, i) => i + 1);
+        const missing = positions.filter((p) => !tasks.find((t) => t.position === p));
+        initializedRef.current = key;
         missing.forEach((p) => {
           upsertTask.mutate(
             { data: { taskText: "", position: p, date: today } },
@@ -69,11 +86,9 @@ export default function Today() {
             }
           );
         });
-      } else {
-        initializedRef.current = today;
       }
     }
-  }, [tasksLoading, tasks, today]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [tasksLoading, streakLoading, tasks, isRestoreMode, today]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleTaskTextChange = (position: number, id: number | null | undefined, text: string) => {
     upsertTask.mutate(
@@ -146,14 +161,15 @@ export default function Today() {
       </div>
 
       {/* Restore Mode Banner */}
-      {streak?.restoreMode && (
+      {isRestoreMode && streak && (
         <div className="bg-theme-4/20 border-l-4 border-theme-4 p-4 rounded-r-xl shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <Trophy className="w-5 h-5 text-theme-4" />
             <h3 className="font-bold text-lg text-theme-4">Restore Your Streak!</h3>
           </div>
           <p className="text-sm text-theme-4/80 mb-3">
-            Complete {6 - streak.restoreProgress} more tasks to restore your longest streak.
+            You missed a day. Complete all 6 tasks today (double work) to restore your streak.{" "}
+            {streak.restoreProgress} / 6 done.
           </p>
           <Progress value={(streak.restoreProgress / 6) * 100} className="h-2 bg-theme-4/20" />
         </div>
@@ -171,8 +187,10 @@ export default function Today() {
         </h3>
 
         <div className="grid grid-cols-1 gap-4">
-          {[1, 2, 3].map((pos) => {
+          {Array.from({ length: requiredTaskCount }, (_, i) => i + 1).map((pos) => {
             const task = tasks?.find((t) => t.position === pos);
+            const accentColors = ["1", "2", "4", "1", "2", "4"] as const;
+            const accent = task?.completed ? "theme-3" : `theme-${accentColors[pos - 1]}`;
             return (
               <Card
                 key={pos}
@@ -183,11 +201,7 @@ export default function Today() {
                 }`}
               >
                 <CardContent className="p-0 flex items-stretch">
-                  <div
-                    className={`w-3 ${
-                      task?.completed ? "bg-theme-3" : `bg-theme-${pos === 1 ? 1 : pos === 2 ? 2 : 4}`
-                    }`}
-                  />
+                  <div className={`w-3 bg-${accent}`} />
                   <div className="flex-1 p-4 flex items-center gap-4">
                     <button
                       onClick={() => task && handleToggleTask(task.id, !task.completed)}
@@ -204,7 +218,7 @@ export default function Today() {
                       <Input
                         value={task?.taskText || ""}
                         onChange={(e) => handleTaskTextChange(pos, task?.id, e.target.value)}
-                        placeholder={`Task ${pos}`}
+                        placeholder={isRestoreMode ? `Restore Task ${pos}` : `Task ${pos}`}
                         className={`border-0 border-b rounded-none shadow-none px-0 h-10 text-lg focus-visible:ring-0 ${
                           task?.completed ? "line-through text-muted-foreground bg-transparent" : "bg-transparent"
                         }`}
@@ -264,8 +278,10 @@ export default function Today() {
                           { id: log.id, data },
                           {
                             onSuccess: () => {
-                              queryClient.setQueryData(getGetTaskLogQueryKey({ date: today }), (old: any) =>
-                                old?.map((l: any) => (l.id === log.id ? { ...l, ...data } : l))
+                              queryClient.setQueryData(
+                                getGetTaskLogQueryKey({ date: today }),
+                                (old: TaskLogEntry[] | undefined) =>
+                                  old?.map((l) => (l.id === log.id ? { ...l, ...data } : l))
                               );
                             },
                           }
@@ -301,7 +317,7 @@ function LogEntryRow({
 }: {
   log: TaskLogEntry;
   index: number;
-  onUpdate: (data: any) => void;
+  onUpdate: (data: TaskLogUpdate) => void;
   onDelete: () => void;
 }) {
   return (

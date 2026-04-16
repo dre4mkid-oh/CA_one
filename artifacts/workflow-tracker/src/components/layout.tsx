@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
 import { useTheme } from "@/lib/theme";
-import { LayoutDashboard, BarChart2, Timer, Sun, Moon, Palette, Palette as PaletteIcon } from "lucide-react";
+import { type LucideIcon, LayoutDashboard, BarChart2, Timer, Sun, Moon, Palette, Palette as PaletteIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -93,7 +93,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-function NavItem({ href, icon: Icon, label, active }: { href: string, icon: any, label: string, active: boolean }) {
+function NavItem({ href, icon: Icon, label, active }: { href: string, icon: LucideIcon, label: string, active: boolean }) {
   return (
     <Link href={href} className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-medium transition-all ${
       active 

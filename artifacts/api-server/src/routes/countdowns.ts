@@ -28,6 +28,12 @@ router.post("/countdowns", async (req, res): Promise<void> => {
     return;
   }
 
+  const existing = await db.select({ id: countdownsTable.id }).from(countdownsTable);
+  if (existing.length >= 3) {
+    res.status(400).json({ error: "Maximum of 3 custom countdown events allowed." });
+    return;
+  }
+
   const [countdown] = await db
     .insert(countdownsTable)
     .values({ label: parsed.data.label, targetDate: new Date(parsed.data.targetDate) })

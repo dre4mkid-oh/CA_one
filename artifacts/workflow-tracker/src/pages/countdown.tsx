@@ -8,19 +8,29 @@ import {
   useCreateCountdown,
   useUpdateCountdown,
   useDeleteCountdown,
-  Countdown,
+  type Countdown,
 } from "@workspace/api-client-react";
+
 import { useCountdown, useClock } from "@/hooks/use-timer";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+
+const MAX_CUSTOM_COUNTDOWNS = 3;
+
+interface CustomCountdownCardProps {
+  countdown: Countdown;
+  index: number;
+  onDelete: () => void;
+  onUpdate: (data: { label?: string; targetDate?: string }) => void;
+}
 
 export default function CountdownPage() {
   const queryClient = useQueryClient();
   const time = useClock();
 
-  const { data: countdowns, isLoading } = useGetCountdowns({
+  const { data: countdowns } = useGetCountdowns({
     query: { queryKey: getGetCountdownsQueryKey() },
   });
 
@@ -116,6 +126,7 @@ export default function CountdownPage() {
 
       <div className="flex items-center justify-between mt-12 mb-6">
         <h3 className="text-2xl font-bold">Custom Events</h3>
+        {(countdowns?.length ?? 0) < MAX_CUSTOM_COUNTDOWNS && (
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button className="rounded-full shadow-md bg-primary text-primary-foreground hover:scale-105 transition-transform">
@@ -149,6 +160,7 @@ export default function CountdownPage() {
             </div>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -189,7 +201,7 @@ export default function CountdownPage() {
   );
 }
 
-function CustomCountdownCard({ countdown, index, onDelete, onUpdate }: any) {
+function CustomCountdownCard({ countdown, index, onDelete, onUpdate }: CustomCountdownCardProps) {
   const timeLeft = useCountdown(countdown.targetDate);
   const isPast = timeLeft.total <= 0;
 
